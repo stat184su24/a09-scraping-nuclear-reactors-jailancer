@@ -1,18 +1,38 @@
 ---
 title: "Activity: Nuclear Reactors"
-author: "YOUR NAME HERE"
+author: "Jai abhishek singh"
 output: html_notebook
 ---
 
 ```{r}
 library(tidyverse)
+library(ggplot2)
 
 ```
 
 ## Scrape the Data 
 
 ```{r}
-#My code here.... 
+# Define the URL for Wikipedia page
+url <- "https://en.wikipedia.org/wiki/List_of_commercial_nuclear_reactors"
+
+# Read content from html page
+page <- read_html(url)
+
+# Extract tables on the page
+tables <- page %>%
+  html_nodes("table") %>%
+  html_table(fill = TRUE)
+
+# Check the number of tables found
+length(tables)
+
+# Extract Japan's reactor
+japan_table_index <-   # Check and adjust the index as necessary
+japan_reactors_raw <- tables[[japan_table_index]]
+
+# Display the head of the raw table to verify
+head(japan_reactors_raw)
 
 
 ```
@@ -20,13 +40,45 @@ library(tidyverse)
 
 ## Your turn: In what ways is the table tidy? How is it not tidy? What’s different about it from a tidy table?
 
-My answer here..... 
+For a tidy table , Each variable should have its own column , Each observation should be in its own row , Each type of observational unit should form a table.
+
+
+The table has a structured format with columns representing different attributes of nuclear reactors, such as "Name," "Unit No.," and "Type."
+
+The table has duplicate columns with similar names, such as  "Capacity (MW)."
 
 
 ## Your Turn: Plot Net Generation Capacity vs Construction Date
 
 ```{r}
-#my code here 
+japan_reactors_clean <- japan_reactors_raw %>%
+  rename(
+    Name = `Plantname`,
+    UnitNo = `UnitNo.`,
+    ReactorType = `Type`,
+    ReactorModel = `Model`,
+    Status = `Status`,
+    NetMW = `Capacity(MW)`,
+    GrossMW = `Capacity(MW)`,
+    ConstructionStart = `Beginbuilding`,
+    CommercialOperation = `Commercialoperation`,
+    Closure = `Closed`
+)
+
+# Display the cleaned data
+head(japan_reactors_clean)
+
+# Plot Net Generation Capacity vs Construction Date
+ggplot(japan_reactors_clean, aes(x = ConstructionStart, y = GrossMW, color = ReactorType)) +
+  geom_point() +
+  labs(
+    title = "Net Generation Capacity vs. Construction Date (Japan Reactors)",
+    x = "Construction Start Date",
+    y = "Net Capacity (MW)"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set2")
+
 
 
 ```
@@ -35,7 +87,30 @@ My answer here.....
 ## Your Turn: Scrape & Clean China Data (then merge with Japan)
 
 ```{r}
-#my code here... 
+
+
+china_table_index <- 
+china_reactors_raw <- tables[[china_table_index]]
+
+# Display the cleaned data
+
+head(japan_reactors_clean)
+
+head(china_reactors_raw)
+
+# Clean and tidy China's reactor data
+china_reactors_clean <- china_reactors_raw 
+
+# Add country column for both datasets
+japan_reactors_clean <- japan_reactors_clean %>% mutate(Country = "Japan")
+china_reactors_clean <- china_reactors_clean %>% mutate(Country = "China")
+
+# Merge the datasets
+reactors_combined <- bind_rows(japan_reactors_clean, china_reactors_clean)
+
+# Display the combined data
+head(reactors_combined)
+
 
 ```
 
@@ -44,6 +119,16 @@ My answer here.....
 ## Your Turn: Reconstruct Info Graphic of Japan Reactors (or other country of interest)
 
 ```{r}
-#My code here
+
+ggplot(japan_reactors_clean, aes(y = Name)) +
+  geom_segment(aes(x = ConstructionStart, xend = CommercialOperation, yend = Name), color = "blue") +
+  geom_point(aes(x = ConstructionStart), color = "red", size = 3) +
+  geom_point(aes(x = CommercialOperation), color = "green", size = 3) +
+  labs(
+    title = "Construction to Operation Timeline of Japan's Nuclear Reactors",
+    x = "Date",
+    y = "Reactor Name"
+  ) +
+  theme_minimal() 
 
 ```
